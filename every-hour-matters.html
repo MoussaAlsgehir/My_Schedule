@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3f4fa" id="metaTheme">
+<title>كل ساعة تهمّ — جدولي الأسبوعي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>
+/* تطبيق الوضع المحفوظ قبل الرسم لتجنّب الوميض */
+(function(){try{var s=JSON.parse(localStorage.getItem('every-hour-matters:v1')||'{}');var t=s.theme;
+var d=t==='dark'||(t!=='light'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);
+document.documentElement.dataset.theme=d?'dark':'light';}catch(e){}})();
+</script>
+<style>
+:root{
+  --bg:#f3f4fa;--surface:#ffffff;--surface-2:#eef0f8;--text:#161a30;--muted:#69708c;--border:#e1e4f0;
+  --empty:#d9dce8;--empty-text:#8b91ab;
+  --accent:#4f46e5;--accent-soft:#ecebfd;--accent-ring:rgba(79,70,229,.2);--on-accent:#ffffff;
+  --danger:#dc3545;
+  --shadow:0 1px 2px rgba(22,26,48,.05),0 10px 28px -12px rgba(22,26,48,.14);
+  --radius:20px;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0d0f1e;--surface:#171a2f;--surface-2:#20243e;--text:#eef0fb;--muted:#9ba2c2;--border:#2a2f50;
+  --empty:#2c3152;--empty-text:#7f87ab;
+  --accent:#8e8bff;--accent-soft:#26284d;--accent-ring:rgba(142,139,255,.3);--on-accent:#101226;
+  --danger:#ff6b78;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px -12px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;
+  font-family:'Cairo','Tajawal',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif;
+  transition:background .3s,color .3s;
+}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;touch-action:manipulation}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+.app{max-width:1180px;margin:0 auto;padding:14px 14px calc(70px + env(safe-area-inset-bottom))}
+
+/* ---------- الرأس ---------- */
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 2px 14px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:25px;flex:none;
+  background:linear-gradient(135deg,#4f46e5,#a855f7);box-shadow:0 8px 18px -8px rgba(99,70,229,.7)}
+.masthead h1{font-size:1.28rem;font-weight:800;line-height:1.2}
+.tag{font-size:.78rem;color:var(--muted)}
+.actions{display:flex;gap:8px;flex:none}
+.iconbtn{width:46px;height:46px;border-radius:15px;background:var(--surface);border:1px solid var(--border);
+  display:grid;place-items:center;font-size:20px;box-shadow:var(--shadow);transition:transform .15s}
+.iconbtn:active{transform:scale(.92)}
+
+/* ---------- تبديل العرض (موبايل) ---------- */
+.viewswitch{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface-2);padding:4px;border-radius:17px;margin-bottom:12px}
+.viewswitch button{min-height:46px;border-radius:13px;font-weight:700;color:var(--muted);transition:.2s}
+.viewswitch button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+
+/* ---------- التخطيط ---------- */
+.layout{display:block}
+@media (max-width:1019px){
+  .layout[data-view="day"] .panel-week{display:none}
+  .layout[data-view="week"] .panel-day{display:none}
+}
+@media (min-width:1020px){
+  .viewswitch{display:none}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+}
+
+/* ---------- تبويبات الأيام ---------- */
+.daytabs{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 12px;margin:0 -2px;position:sticky;top:0;z-index:20;
+  background:linear-gradient(var(--bg) 78%,transparent);scrollbar-width:none;scroll-snap-type:x proximity}
+.daytabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;min-width:82px;padding:10px 12px 9px;border-radius:17px;background:var(--surface);
+  border:1.5px solid var(--border);display:flex;flex-direction:column;gap:7px;align-items:stretch;text-align:center;
+  transition:border-color .2s,box-shadow .2s,background .2s;scroll-snap-align:center}
+.tab .tn{font-weight:700;font-size:.95rem;white-space:nowrap}
+.tab .mini{height:6px;border-radius:99px;background:var(--empty)}
+.tab[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px var(--accent-ring)}
+.tab.today .tn::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-inline-start:6px;vertical-align:middle}
+
+/* ---------- البطاقات ---------- */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+.card h2{font-size:1.02rem;font-weight:800}
+.hint{color:var(--muted);font-size:.8rem;margin:2px 0 12px}
+.sectitle{font-size:1.1rem;font-weight:800;margin:6px 2px 12px}
+
+/* رأس اليوم */
+.dh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.dayname{font-size:1.45rem;font-weight:800;line-height:1.2}
+.badge{display:inline-block;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:1px 10px;font-size:.74rem;font-weight:700;margin-inline-start:8px;vertical-align:middle}
+.status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip{padding:6px 13px;border-radius:99px;background:var(--surface-2);font-size:.9rem;font-weight:600;color:var(--muted)}
+.chip b{color:var(--text);font-weight:800;margin-inline-start:4px}
+.chip.busy{background:var(--accent-soft)}
+.sep{color:var(--muted);font-weight:700}
+
+/* الشريط المكدّس */
+.stack{position:relative;height:50px;border-radius:16px;background:var(--empty);overflow:hidden}
+.seg{position:absolute;top:0;bottom:0;right:0;width:0;background:var(--c);color:var(--t);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.92rem;white-space:nowrap;overflow:hidden;
+  border-left:2px solid var(--surface);
+  transition:right .55s cubic-bezier(.2,.8,.2,1),width .55s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.seg.z{opacity:0}
+.seg.lead{box-shadow:inset 0 0 0 3px rgba(255,255,255,.8);z-index:1}
+.daylegend{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:12px}
+.lg{display:flex;align-items:center;gap:7px;font-size:.84rem;color:var(--muted);padding:4px 10px;border-radius:99px;font-weight:600;border:1.5px solid transparent}
+.lg .ld{width:11px;height:11px;border-radius:4px;background:var(--c)}
+.lg .lv{color:var(--text);font-weight:800}
+.lg.lead{border-color:var(--c);background:var(--surface-2);color:var(--text)}
+.topline{margin-top:12px;padding:11px 13px;border-radius:15px;background:var(--surface-2);font-size:.9rem;display:flex;gap:9px;align-items:center}
+.topline .star{color:#f5b301;font-size:1.15rem;flex:none}
+
+/* شبكة الساعات */
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+@media (min-width:560px){.grid{grid-template-columns:repeat(8,1fr);gap:10px}}
+.cell{position:relative;aspect-ratio:1;min-height:48px;border-radius:15px;border:1.5px dashed var(--border);
+  background:var(--surface-2);color:var(--empty-text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-weight:800;transition:transform .15s,background .3s,box-shadow .3s,color .3s}
+.cell:active{transform:scale(.92)}
+.cell .ch{font-size:1.02rem;line-height:1;font-variant-numeric:tabular-nums}
+.cell .ce{font-size:1rem;line-height:1;min-height:1em}
+.cell.filled{background:var(--c);color:var(--t);border:1.5px solid transparent;box-shadow:0 6px 12px -6px var(--c)}
+.cell.now{outline:3px solid var(--accent);outline-offset:2px}
+
+/* التعديل السريع */
+.erow{padding:13px 0;border-top:1px solid var(--border)}
+.erow:first-child{border-top:0;padding-top:2px}
+.erow-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ename{display:flex;align-items:center;gap:9px;min-width:0;font-weight:700;font-size:1.02rem}
+.edot{width:15px;height:15px;border-radius:5px;background:var(--c);flex:none}
+.enm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.estep{display:flex;align-items:center;gap:6px;flex:none}
+.step{width:48px;height:48px;border-radius:15px;background:var(--surface-2);border:1px solid var(--border);
+  font-size:1.6rem;font-weight:700;display:grid;place-items:center;line-height:1;transition:transform .12s,opacity .2s}
+.step:active{transform:scale(.9)}
+.step:disabled,.step[aria-disabled="true"]{opacity:.38}
+.ecount{min-width:46px;text-align:center;font-weight:800;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.eslider{-webkit-appearance:none;appearance:none;width:100%;height:32px;background:transparent;margin:0;cursor:pointer;touch-action:pan-y;display:block}
+.eslider::-webkit-slider-runnable-track{height:10px;border-radius:99px;background:linear-gradient(to left,var(--c) var(--p,0%),var(--surface-2) var(--p,0%))}
+.eslider::-moz-range-track{height:10px;border-radius:99px;background:linear-gradient(to left,var(--c) var(--p,0%),var(--surface-2) var(--p,0%))}
+.eslider::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:5px solid var(--c);margin-top:-9px;box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.eslider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:5px solid var(--c);box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.freenote{margin-top:6px;font-size:.82rem;color:var(--muted)}
+
+/* الأدوات */
+.tools{display:grid;gap:10px}
+@media (min-width:560px){.tools{grid-template-columns:repeat(3,1fr)}}
+.btn{min-height:50px;padding:8px 16px;border-radius:15px;background:var(--surface-2);border:1px solid var(--border);font-weight:700;
+  display:inline-flex;gap:8px;align-items:center;justify-content:center;text-align:center;transition:transform .12s,background .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.danger{color:var(--danger)}
+.btn.danger.solid{background:var(--danger);color:#fff;border-color:transparent}
+.btn.ghost{background:transparent}
+
+/* بطاقات الملخص */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.sc{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:13px 15px;box-shadow:var(--shadow)}
+.sc::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:5px;background:var(--c,var(--accent))}
+.sc .sl{font-size:.84rem;color:var(--muted);font-weight:700;display:flex;gap:6px;align-items:center}
+.sc .sv{font-size:1.65rem;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
+.sc .sv small{font-size:.8rem;color:var(--muted);font-weight:600;margin-inline-start:5px}
+.sc .ss{font-size:.76rem;color:var(--muted)}
+.sc.leader{border:1.5px solid var(--c,var(--border))}
+.sc .sv.txt{font-size:1.15rem}
+
+/* الدونات */
+.donutwrap{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap}
+.donut{position:relative;width:196px;height:196px;flex:none}
+.donut svg{width:100%;height:100%;display:block}
+.dseg{fill:none;stroke-width:5.4;stroke-linecap:butt;transition:stroke-dasharray .7s cubic-bezier(.2,.8,.2,1),stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1),stroke .3s}
+.donut .mid{position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:0}
+.mid b{font-size:2.2rem;line-height:1.05;font-weight:800;font-variant-numeric:tabular-nums}
+.mid span{font-size:.74rem;color:var(--muted);max-width:110px}
+.dlegend{flex:1;min-width:210px;display:grid;gap:8px}
+.lrow{display:flex;align-items:center;gap:10px;padding:10px 13px;border-radius:15px;background:var(--surface-2)}
+.lrow .ld{width:13px;height:13px;border-radius:5px;background:var(--c);flex:none}
+.lrow .ln{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lrow .lv{font-weight:800;font-variant-numeric:tabular-nums}
+.lrow .lp{color:var(--muted);font-size:.8rem;min-width:40px;text-align:end;font-variant-numeric:tabular-nums}
+
+/* أعمدة الأيام */
+.cols{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;height:230px}
+.col{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;height:100%;padding:0;border-radius:12px}
+.col .tot{font-size:.8rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
+.col .bar{position:relative;flex:1 1 0;min-height:0;width:100%;max-width:46px;border-radius:11px;background:var(--empty);overflow:hidden}
+.col .s{position:absolute;inset-inline:0;bottom:0;height:0;background:var(--c);border-top:2px solid var(--surface);
+  transition:height .55s cubic-bezier(.2,.8,.2,1),bottom .55s cubic-bezier(.2,.8,.2,1)}
+.col .s.z{border-top-width:0}
+.col .nm{font-size:.72rem;font-weight:700;color:var(--muted);padding:2px 5px;border-radius:99px;white-space:nowrap}
+.col[aria-current="true"] .nm{background:var(--accent);color:var(--on-accent)}
+.col.today .nm::after{content:'•';margin-inline-start:2px}
+.colslegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;justify-content:center;font-size:.82rem;color:var(--muted);font-weight:600}
+.colslegend span{display:inline-flex;align-items:center;gap:6px}
+.colslegend i{width:11px;height:11px;border-radius:4px;background:var(--c);display:inline-block}
+
+/* ---------- النوافذ ---------- */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(8,10,26,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex;animation:fade .2s}
+.sheet,.modal{background:var(--surface);width:100%;max-width:520px;border-radius:26px 26px 0 0;padding:12px 18px calc(20px + env(safe-area-inset-bottom));
+  box-shadow:0 -12px 40px rgba(0,0,0,.28);animation:up .3s cubic-bezier(.2,.9,.3,1);max-height:90vh;overflow:auto}
+@media (min-width:600px){.overlay{align-items:center}.sheet,.modal{border-radius:26px;padding-bottom:20px}.grab{display:none}}
+@keyframes up{from{transform:translateY(46px);opacity:0}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.grab{width:44px;height:5px;border-radius:9px;background:var(--border);margin:0 auto 12px}
+.sheet h3,.modal h3{font-size:1.2rem;font-weight:800}
+.sub{color:var(--muted);font-size:.86rem;margin:2px 0 14px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{min-height:68px;border-radius:17px;border:2px solid var(--border);background:var(--surface-2);padding:10px 12px;display:flex;align-items:center;gap:10px;text-align:start;font-weight:700;transition:transform .12s}
+.opt:active{transform:scale(.97)}
+.opt .od{width:40px;height:40px;border-radius:13px;background:var(--c);color:var(--t);display:grid;place-items:center;font-size:20px;flex:none}
+.opt .on{display:block;line-height:1.3}
+.opt small{display:block;color:var(--muted);font-weight:500;font-size:.76rem}
+.opt[aria-pressed="true"]{border-color:var(--c,var(--accent));background:var(--surface-2);background:color-mix(in srgb,var(--c,var(--accent)) 15%,var(--surface))}
+.opt.clear{grid-column:1/-1;min-height:58px}
+.opt.clear .od{background:var(--empty);color:var(--empty-text)}
+.daychecks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.chk{position:relative}
+.chk input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.chk span{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:15px;border:2px solid var(--border);background:var(--surface-2);font-weight:700;transition:.15s}
+.chk input:checked+span{border-color:var(--accent);background:var(--accent-soft)}
+.chk input:checked+span::before{content:'✓';font-weight:800;color:var(--accent)}
+.chk input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.mactions{display:flex;gap:10px;margin-top:16px}
+.mactions .btn{flex:1}
+.setsec{font-weight:800;margin:14px 0 8px;font-size:.95rem}
+.setrow{display:flex;gap:8px;margin-bottom:10px}
+.in{height:50px;border-radius:15px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;padding:0 13px;min-width:0}
+.in.emo{width:60px;text-align:center;font-size:1.3rem;padding:0}
+.in.nam{flex:1}
+.in.col{width:60px;padding:4px;cursor:pointer}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface-2);padding:4px;border-radius:16px}
+.seg3 button{min-height:44px;border-radius:12px;font-weight:700;color:var(--muted)}
+.seg3 button[aria-pressed="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.foot{margin-top:18px;text-align:center;color:var(--muted);font-size:.78rem}
+
+/* ---------- التنبيه ---------- */
+.toast{position:fixed;inset-inline:0;margin-inline:auto;width:max-content;max-width:calc(100% - 28px);bottom:calc(18px + env(safe-area-inset-bottom));z-index:300;
+  background:#262a48;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 16px;display:flex;gap:14px;align-items:center;
+  font-weight:600;font-size:.92rem;box-shadow:0 12px 32px rgba(0,0,0,.4);opacity:0;transform:translateY(22px);pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.show{opacity:1;transform:none;pointer-events:auto}
+.toast button{color:#a9c4ff;font-weight:800;padding:4px 8px;min-height:34px}
+
+/* ---------- الطباعة / PDF ---------- */
+.print-only{display:none}
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  :root,:root[data-theme="dark"]{--bg:#fff;--surface:#fff;--surface-2:#f1f2f7;--text:#111;--muted:#555;--border:#d8dae3;--empty:#e3e5ee;--shadow:none;--accent:#4f46e5;--accent-soft:#ecebfd}
+  body{background:#fff}
+  .masthead,.viewswitch,.panel-day,.overlay,.toast,.foot{display:none!important}
+  .layout{display:block!important}
+  .panel-week{display:block!important}
+  .card,.sc{box-shadow:none;break-inside:avoid}
+  .print-only{display:block;margin-bottom:14px}
+  .ph{font-size:18pt;font-weight:800}
+  .pd{color:#555;font-size:10pt;margin-bottom:8px}
+  .pleg{display:flex;gap:14px;font-size:10pt;margin-bottom:8px}
+  .pleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:5px}
+  .pt{width:100%;border-collapse:collapse;font-size:8pt}
+  .pt th,.pt td{border:1px solid #cfd2dc;text-align:center;padding:4px 0}
+  .pt td{height:18px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<noscript><p style="padding:20px;text-align:center">يحتاج هذا التطبيق إلى تفعيل جافاسكربت.</p></noscript>
+
+<div class="app">
+  <header class="masthead">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">⏳</div>
+      <div>
+        <h1>كل ساعة تهمّ</h1>
+        <p class="tag">افهم وقتك، وصمّم حياتك</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button type="button" class="iconbtn" id="printBtn" aria-label="طباعة أو حفظ PDF" title="طباعة / حفظ PDF">🖨️</button>
+      <button type="button" class="iconbtn" id="themeBtn" aria-label="تبديل الوضع الداكن" title="الوضع الداكن">🌙</button>
+      <button type="button" class="iconbtn" id="settingsBtn" aria-label="الإعدادات" title="الإعدادات">⚙️</button>
+    </div>
+  </header>
+
+  <div class="viewswitch" role="group" aria-label="طريقة العرض">
+    <button type="button" id="viewDay" aria-pressed="true">📅 اليوم</button>
+    <button type="button" id="viewWeek" aria-pressed="false">📊 الأسبوع</button>
+  </div>
+
+  <main class="layout" id="layout" data-view="day">
+
+    <!-- ======== لوحة اليوم ======== -->
+    <section class="panel-day" aria-label="اليوم">
+      <div class="daytabs" id="dayTabs" role="group" aria-label="أيام الأسبوع"></div>
+
+      <div class="card">
+        <div class="dh-top">
+          <div><h2 class="dayname" id="dayName"></h2><span class="badge" id="todayBadge" hidden>اليوم</span></div>
+          <div class="status" id="status" aria-live="polite"></div>
+        </div>
+        <div class="stack" id="dayStack" role="img"></div>
+        <div class="daylegend" id="dayLegend"></div>
+        <div class="topline" id="dayTop"></div>
+      </div>
+
+      <div class="card">
+        <h2>ساعات اليوم</h2>
+        <p class="hint">اضغط على أي ساعة لاختيار قسمها · الإطار الملوّن = الساعة الحالية</p>
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="card editors-card">
+        <h2>تعديل سريع</h2>
+        <p class="hint">غيّر عدد ساعات كل قسم، وتُملأ الساعات الجديدة من أول ساعة فاضية</p>
+        <div id="editors"></div>
+        <p class="freenote" id="freeNote" aria-live="polite"></p>
+      </div>
+
+      <div class="card tools-card">
+        <h2>أدوات</h2>
+        <p class="hint">كل عملية قابلة للتراجع بعد تنفيذها</p>
+        <div class="tools">
+          <button type="button" class="btn" id="btnCopy">📋 نسخ هذا اليوم إلى أيام أخرى</button>
+          <button type="button" class="btn" id="btnClear">🧹 تفريغ اليوم</button>
+          <button type="button" class="btn danger" id="btnReset">♻️ إعادة ضبط الكل</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== لوحة الأسبوع ======== -->
+    <section class="panel-week" aria-label="الأسبوع">
+      <div class="print-only" id="printArea"></div>
+      <h2 class="sectitle">نظرة على الأسبوع</h2>
+      <div class="cards" id="cards"></div>
+
+      <div class="card">
+        <h2>توزيع الأسبوع</h2>
+        <p class="hint">من إجمالي 168 ساعة</p>
+        <div class="donutwrap">
+          <div class="donut">
+            <svg viewBox="0 0 42 42" id="donutSvg" role="img" aria-label="رسم دائري لتوزيع ساعات الأسبوع"></svg>
+            <div class="mid" id="donutBusy"></div>
+          </div>
+          <div class="dlegend" id="donutLegend"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>مقارنة الأيام</h2>
+        <p class="hint">اضغط على عمود لفتح اليوم · الرقم أعلى العمود = الساعات المشغولة</p>
+        <div class="cols" id="cols"></div>
+        <div class="colslegend" id="colsLegend"></div>
+      </div>
+    </section>
+  </main>
+
+  <p class="foot">تُحفظ تعديلاتك تلقائيًا على هذا الجهاز · Every Hour Matters</p>
+</div>
+
+<!-- ======== نافذة اختيار القسم لساعة ======== -->
+<div class="overlay" id="sheetOv">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="grab"></div>
+    <h3 id="sheetTitle"></h3>
+    <p class="sub" id="sheetSub"></p>
+    <div class="opts" id="sheetOpts"></div>
+  </div>
+</div>
+
+<!-- ======== نافذة النسخ ======== -->
+<div class="overlay" id="copyOv">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="copyTitle">
+    <div class="grab"></div>
+    <h3 id="copyTitle"></h3>
+    <p class="sub">اختر الأيام التي سيُستبدل جدولها بجدول هذا اليوم.</p>
+    <div class="daychecks" id="copyDays"></div>
+    <button type="button" class="btn ghost" id="copyAll" style="width:100%">تحديد الكل / إلغاء التحديد</button>
+    <div class="mactions">
+      <button type="button" class="btn primary" id="copyGo">نسخ</button>
+      <button type="button" class="btn" data-close>إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== نافذة التأكيد ======== -->
+<div class="overlay" id="askOv">
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="askTitle" aria-describedby="askText">
+    <div class="grab"></div>
+    <h3 id="askTitle"></h3>
+    <p class="sub" id="askText" style="margin-bottom:0"></p>
+    <div class="mactions">
+      <button type="button" class="btn danger solid" id="askOk">تأكيد</button>
+      <button type="button" class="btn" data-close>إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== الإعدادات ======== -->
+<div class="overlay" id="setOv">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="grab"></div>
+    <h3 id="setTitle">الإعدادات</h3>
+    <p class="sub">عدّل رمز كل قسم واسمه ولونه، وتنعكس التغييرات فورًا في كل مكان.</p>
+    <div class="setsec">الأقسام</div>
+    <div id="setCats"></div>
+    <div class="setsec">المظهر</div>
+    <div class="seg3" id="setTheme" role="group" aria-label="المظهر">
+      <button type="button" data-t="auto">تلقائي</button>
+      <button type="button" data-t="light">فاتح</button>
+      <button type="button" data-t="dark">داكن</button>
+    </div>
+    <div class="mactions" style="margin-top:20px">
+      <button type="button" class="btn primary" data-close>تم</button>
+      <button type="button" class="btn" id="setRestore">استعادة الافتراضي</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ======================= ثوابت ======================= */
+var KEY='every-hour-matters:v1';
+var DAYS=['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+var DAYS_SHORT=['سبت','أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة'];
+var DEFAULT_CATS=[
+  {id:'uni',   name:'جامعة',emoji:'🎓',color:'#3b6cf6'},
+  {id:'work',  name:'شغل',  emoji:'💼',color:'#f59e0b'},
+  {id:'mosque',name:'جامع', emoji:'🕌',color:'#0b8a5f'},
+  {id:'life',  name:'حياة', emoji:'🌿',color:'#9b5cf6'}
+];
+
+/* ======================= أدوات مساعدة ======================= */
+function $(id){return document.getElementById(id);}
+function pad(n){return String(n).padStart(2,'0');}
+function esc(s){return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+function hrs(n){return n===1?'ساعة واحدة':n===2?'ساعتان':(n>=3&&n<=10)?n+' ساعات':n+' ساعة';}
+function pct(n,t){return Math.round(n/t*100);}
+function avg(n){return String(Math.round(n/7*10)/10);}
+function todayIdx(){return (new Date().getDay()+1)%7;} /* السبت=0 ... الجمعة=6 */
+function lum(hex){
+  var n=parseInt(hex.slice(1),16);
+  function f(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);}
+  return .2126*f((n>>16)&255)+.7152*f((n>>8)&255)+.0722*f(n&255);
+}
+function textOn(hex){
+  var L=lum(hex), cw=1.05/(L+.05), cd=(L+.05)/.058;
+  return (cw>=3.7||cw>=cd)?'#ffffff':'#14162b';
+}
+
+/* ======================= الحالة والحفظ ======================= */
+var storageOK=true;
+function freshDays(){var a=[];for(var i=0;i<7;i++)a.push(new Array(24).fill(''));return a;}
+function defaultState(){return {cats:DEFAULT_CATS.map(function(c){return Object.assign({},c);}),days:freshDays(),theme:'auto'};}
+function load(){
+  var s=defaultState();
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw)return s;
+    var p=JSON.parse(raw);
+    if(p&&Array.isArray(p.cats)){
+      s.cats=s.cats.map(function(d,i){
+        var c=p.cats[i]||{};
+        return {id:d.id,
+          name:(typeof c.name==='string'&&c.name.trim())?c.name.trim().slice(0,14):d.name,
+          emoji:typeof c.emoji==='string'?c.emoji.slice(0,4):d.emoji,
+          color:/^#[0-9a-f]{6}$/i.test(c.color||'')?c.color:d.color};
+      });
+    }
+    if(p&&Array.isArray(p.days)&&p.days.length===7){
+      var ids=s.cats.map(function(c){return c.id;});
+      s.days=p.days.map(function(d){
+        return Array.from({length:24},function(_,h){var v=d&&d[h];return ids.indexOf(v)>-1?v:'';});
+      });
+    }
+    if(p&&['auto','light','dark'].indexOf(p.theme)>-1)s.theme=p.theme;
+  }catch(e){}
+  return s;
+}
+var state=load();
+var sel=todayIdx();
+var sheetHour=0;
+
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify({v:1,cats:state.cats,days:state.days,theme:state.theme}));
+  }catch(e){
+    if(storageOK){storageOK=false;toast('تعذّر الحفظ في هذا المتصفح — قد تضيع التعديلات عند الإغلاق',{ms:5200});}
+  }
+}
+
+/* ======================= حسابات ======================= */
+function catById(id){for(var i=0;i<state.cats.length;i++){if(state.cats[i].id===id)return state.cats[i];}return null;}
+function counts(d){
+  var c={'':0};state.cats.forEach(function(x){c[x.id]=0;});
+  state.days[d].forEach(function(v){c[v]=(c[v]||0)+1;});
+  return c;
+}
+function weekCounts(){
+  var t={'':0};state.cats.forEach(function(x){t[x.id]=0;});
+  for(var d=0;d<7;d++){var c=counts(d);for(var k in t)t[k]+=c[k];}
+  return t;
+}
+function leaders(c){
+  var max=0;state.cats.forEach(function(x){if(c[x.id]>max)max=c[x.id];});
+  if(!max)return {max:0,list:[]};
+  return {max:max,list:state.cats.filter(function(x){return c[x.id]===max;})};
+}
+function gradFor(c){
+  var acc=0,parts=[];
+  state.cats.forEach(function(cat){
+    var n=c[cat.id];if(!n)return;
+    var a=acc/24*100;acc+=n;parts.push(cat.color+' '+a+'% '+(acc/24*100)+'%');
+  });
+  if(acc<24)parts.push('var(--empty) '+(acc/24*100)+'% 100%');
+  return 'linear-gradient(to left,'+parts.join(',')+')';
+}
+
+/* ======================= التنبيه ======================= */
+var toastT;
+function toast(msg,opt){
+  opt=opt||{};
+  var t=$('toast');t.innerHTML='';
+  var s=document.createElement('span');s.textContent=msg;t.appendChild(s);
+  if(opt.action){
+    var b=document.createElement('button');b.type='button';b.textContent=opt.action;
+    b.addEventListener('click',function(){hideToast();if(opt.onAction)opt.onAction();});
+    t.appendChild(b);
+  }
+  t.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(hideToast,opt.ms||2800);
+}
+function hideToast(){$('toast').classList.remove('show');}
+
+/* ======================= النوافذ ======================= */
+var openStack=[];
+function openOv(ov,focusSel){
+  ov._ret=document.activeElement;
+  ov.classList.add('open');
+  openStack.push(ov);
+  document.body.style.overflow='hidden';
+  setTimeout(function(){
+    var f=(focusSel&&ov.querySelector(focusSel))||ov.querySelector('button,input');
+    if(f)f.focus({preventScroll:true});
+  },40);
+}
+function closeOv(ov){
+  ov.classList.remove('open');
+  var i=openStack.indexOf(ov);if(i>-1)openStack.splice(i,1);
+  if(!openStack.length)document.body.style.overflow='';
+  if(ov._ret&&ov._ret.focus){try{ov._ret.focus({preventScroll:true});}catch(e){}}
+}
+document.querySelectorAll('.overlay').forEach(function(ov){
+  ov.addEventListener('click',function(e){if(e.target===ov)closeOv(ov);});
+});
+document.querySelectorAll('[data-close]').forEach(function(b){
+  b.addEventListener('click',function(){closeOv(b.closest('.overlay'));});
+});
+document.addEventListener('keydown',function(e){
+  if(!openStack.length)return;
+  var ov=openStack[openStack.length-1];
+  if(e.key==='Escape'){closeOv(ov);return;}
+  if(e.key==='Tab'){
+    var f=Array.prototype.filter.call(ov.querySelectorAll('button:not([disabled]),input:not([disabled])'),function(x){return x.offsetParent!==null||x.type==='checkbox';});
+    if(!f.length)return;
+    var first=f[0],last=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  }
+});
+
+var askCb=null;
+function ask(title,text,okLabel,cb){
+  $('askTitle').textContent=title;$('askText').textContent=text;$('askOk').textContent=okLabel;
+  askCb=cb;openOv($('askOv'),'[data-close]');
+}
+$('askOk').addEventListener('click',function(){
+  closeOv($('askOv'));var cb=askCb;askCb=null;if(cb)cb();
+});
+
+function withUndo(msg,fn){
+  var snap=JSON.stringify(state.days);
+  fn();save();renderAll();
+  toast(msg,{action:'تراجع',ms:6500,onAction:function(){
+    state.days=JSON.parse(snap);save();renderAll();toast('تم التراجع');
+  }});
+}
+
+/* ======================= التبويبات ======================= */
+var tabEls=[];
+function buildTabs(){
+  DAYS.forEach(function(n,i){
+    var b=document.createElement('button');b.type='button';b.className='tab';
+    b.innerHTML='<span class="tn"></span><span class="mini"></span>';
+    b.querySelector('.tn').textContent=n;
+    b.addEventListener('click',function(){selectDay(i);});
+    $('dayTabs').appendChild(b);tabEls.push(b);
+  });
+}
+function renderTabs(){
+  var t=todayIdx();
+  tabEls.forEach(function(b,i){
+    var c=counts(i);
+    b.setAttribute('aria-pressed',String(i===sel));
+    b.classList.toggle('today',i===t);
+    b.querySelector('.mini').style.background=gradFor(c);
+    b.setAttribute('aria-label',DAYS[i]+(i===t?' (اليوم)':'')+' — مشغول '+(24-c[''])+' من 24');
+  });
+}
+function selectDay(d,goDay){
+  sel=d;renderAll();
+  if(goDay)setView('day');
+  if(tabEls[d].scrollIntoView){try{tabEls[d].scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}}
+}
+function setView(v){
+  $('layout').dataset.view=v;
+  $('viewDay').setAttribute('aria-pressed',String(v==='day'));
+  $('viewWeek').setAttribute('aria-pressed',String(v==='week'));
+  window.scrollTo(0,0);
+}
+
+/* ======================= رأس اليوم + الشريط المكدّس ======================= */
+var segEls=[],legEls=[];
+function allIds(){return state.cats.map(function(c){return c.id;}).concat(['']);}
+function buildDayHead(){
+  allIds().forEach(function(id){
+    var el=document.createElement('div');el.className='seg';
+    var lab=document.createElement('span');el.appendChild(lab);
+    $('dayStack').appendChild(el);segEls.push({el:el,lab:lab,id:id});
+    var lg=document.createElement('div');lg.className='lg';
+    lg.innerHTML='<i class="ld"></i><span class="lt"></span><span class="lv"></span>';
+    $('dayLegend').appendChild(lg);legEls.push({el:lg,id:id});
+  });
+}
+function renderDayHead(){
+  var c=counts(sel),busy=24-c[''],L=leaders(c);
+  $('dayName').textContent=DAYS[sel];
+  $('todayBadge').hidden=(sel!==todayIdx());
+  $('status').innerHTML='<span class="chip busy">مشغول <b>'+hrs(busy)+'</b></span><span class="sep">/</span><span class="chip">فاضي <b>'+hrs(c[''])+'</b></span>';
+
+  var acc=0,desc=[];
+  segEls.forEach(function(o){
+    var cat=catById(o.id),n=c[o.id];
+    o.el.style.setProperty('--c',cat?cat.color:'var(--empty)');
+    o.el.style.setProperty('--t',cat?textOn(cat.color):'var(--empty-text)');
+    o.el.style.right=(acc/24*100)+'%';
+    o.el.style.width=(n/24*100)+'%';
+    acc+=n;
+    o.el.classList.toggle('z',n===0);
+    o.el.classList.toggle('lead',!!cat&&L.list.indexOf(cat)>-1);
+    o.lab.textContent=n>=4?((cat&&cat.emoji?cat.emoji+' ':'')+n):(n>=2?String(n):'');
+    desc.push((cat?cat.name:'فاضي')+' '+n);
+  });
+  $('dayStack').setAttribute('aria-label','توزيع '+DAYS[sel]+': '+desc.join('، '));
+
+  legEls.forEach(function(o){
+    var cat=catById(o.id),n=c[o.id];
+    o.el.style.setProperty('--c',cat?cat.color:'var(--empty)');
+    o.el.querySelector('.lt').textContent=cat?((cat.emoji?cat.emoji+' ':'')+cat.name):'فاضي';
+    o.el.querySelector('.lv').textContent=n+' س';
+    o.el.classList.toggle('lead',!!cat&&L.list.indexOf(cat)>-1);
+  });
+
+  var tl=$('dayTop');
+  if(!L.max){
+    tl.innerHTML='<span class="star">☆</span><span>لم تُوزّع أي ساعة بعد — اضغط على مربع ساعة لتبدأ.</span>';
+  }else{
+    var names=L.list.map(function(x){return (x.emoji?x.emoji+' ':'')+x.name;}).join(' و ');
+    tl.innerHTML='<span class="star">★</span><span>'+(L.list.length>1?'الأكثر وقتًا اليوم (تعادل): ':'الأكثر وقتًا اليوم: ')+'<b>'+esc(names)+'</b> — '+hrs(L.max)+' ('+pct(L.max,24)+'%)</span>';
+  }
+}
+
+/* ======================= شبكة الساعات ======================= */
+var cellEls=[];
+function buildGrid(){
+  for(var hr=0;hr<24;hr++){
+    (function(hr){
+      var b=document.createElement('button');b.type='button';b.className='cell';
+      b.innerHTML='<span class="ch"></span><span class="ce"></span>';
+      b.querySelector('.ch').textContent=pad(hr);
+      b.addEventListener('click',function(){openSheet(hr);});
+      $('grid').appendChild(b);cellEls.push(b);
+    })(hr);
+  }
+}
+function renderGrid(){
+  var isToday=(sel===todayIdx()),nowH=new Date().getHours();
+  cellEls.forEach(function(b,hr){
+    var cat=catById(state.days[sel][hr]),isNow=isToday&&hr===nowH;
+    b.classList.toggle('filled',!!cat);
+    b.classList.toggle('now',isNow);
+    if(cat){b.style.setProperty('--c',cat.color);b.style.setProperty('--t',textOn(cat.color));}
+    else{b.style.removeProperty('--c');b.style.removeProperty('--t');}
+    b.querySelector('.ce').textContent=cat?cat.emoji:'';
+    b.setAttribute('aria-label','الساعة '+pad(hr)+':00 — '+(cat?cat.name:'فاضية')+(isNow?' (الآن)':''));
+  });
+}
+function openSheet(hr){
+  sheetHour=hr;
+  var cur=state.days[sel][hr],c=counts(sel);
+  $('sheetTitle').textContent='الساعة '+pad(hr)+':00 – '+pad((hr+1)%24)+':00';
+  $('sheetSub').textContent=DAYS[sel]+' — اختر القسم الذي تقضي فيه هذه الساعة';
+  var box=$('sheetOpts');box.innerHTML='';
+  state.cats.forEach(function(cat){
+    var b=document.createElement('button');b.type='button';b.className='opt';
+    b.style.setProperty('--c',cat.color);b.style.setProperty('--t',textOn(cat.color));
+    b.setAttribute('aria-pressed',String(cur===cat.id));
+    b.innerHTML='<span class="od"></span><span><span class="on"></span><small></small></span>';
+    b.querySelector('.od').textContent=cat.emoji||'●';
+    b.querySelector('.on').textContent=cat.name;
+    b.querySelector('small').textContent='اليوم: '+hrs(c[cat.id]);
+    b.addEventListener('click',function(){pick(cat.id);});
+    box.appendChild(b);
+  });
+  var e=document.createElement('button');e.type='button';e.className='opt clear';
+  e.setAttribute('aria-pressed',String(cur===''));
+  e.innerHTML='<span class="od">∅</span><span><span class="on">فاضية</span><small></small></span>';
+  e.querySelector('small').textContent='تفريغ هذه الساعة';
+  e.addEventListener('click',function(){pick('');});
+  box.appendChild(e);
+  openOv($('sheetOv'),'.opt[aria-pressed="true"]');
+}
+function pick(id){
+  state.days[sel][sheetHour]=id;save();renderAll();closeOv($('sheetOv'));
+}
+
+/* ======================= التعديل السريع ======================= */
+var edRows=[];
+function buildEditors(){
+  state.cats.forEach(function(cat,i){
+    var row=document.createElement('div');row.className='erow';
+    row.innerHTML=
+      '<div class="erow-top"><div class="ename"><span class="edot"></span><span class="eem"></span><span class="enm"></span></div>'+
+      '<div class="estep"><button type="button" class="step minus">−</button><output class="ecount">0</output><button type="button" class="step plus">+</button></div></div>'+
+      '<input class="eslider" type="range" min="0" max="24" step="1" value="0">';
+    var q=function(s){return row.querySelector(s);};
+    var o={row:row,i:i,em:q('.eem'),nm:q('.enm'),count:q('.ecount'),minus:q('.minus'),plus:q('.plus'),slider:q('.eslider')};
+    o.minus.addEventListener('click',function(){adjust(i,-1);});
+    o.plus.addEventListener('click',function(){adjust(i,1);});
+    o.slider.addEventListener('input',function(){setCount(i,parseInt(o.slider.value,10));});
+    $('editors').appendChild(row);edRows.push(o);
+  });
+}
+function adjust(i,delta){setCount(i,counts(sel)[state.cats[i].id]+delta);}
+function setCount(i,n){
+  var id=state.cats[i].id,day=state.days[sel];
+  var cur=day.filter(function(x){return x===id;}).length;
+  n=Math.max(0,Math.min(24,n));
+  if(n>cur){
+    var free=day.filter(function(x){return !x;}).length;
+    var need=n-cur,added=0;
+    for(var h=0;h<24&&need>0;h++){if(!day[h]){day[h]=id;need--;added++;}}
+    if(need>0){
+      toast(free===0?'اليوم ممتلئ: 24 ساعة بالفعل. قلّل قسمًا آخر أولًا.':'الحد الأقصى 24 ساعة في اليوم — أُضيف '+hrs(added)+' فقط.',{ms:3200});
+    }
+  }else if(n<cur){
+    var rm=cur-n;
+    for(var k=23;k>=0&&rm>0;k--){if(day[k]===id){day[k]='';rm--;}}
+  }
+  save();renderAll();
+}
+function renderEditors(){
+  var c=counts(sel);
+  edRows.forEach(function(o){
+    var cat=state.cats[o.i],n=c[cat.id];
+    o.row.style.setProperty('--c',cat.color);
+    o.row.querySelector('.edot').style.background=cat.color;
+    o.em.textContent=cat.emoji;o.nm.textContent=cat.name;
+    o.count.textContent=n;
+    o.minus.disabled=(n===0);
+    o.plus.setAttribute('aria-disabled',String(c['']===0));
+    o.minus.setAttribute('aria-label','تقليل ساعة من '+cat.name);
+    o.plus.setAttribute('aria-label','إضافة ساعة إلى '+cat.name);
+    o.slider.value=n;o.slider.style.setProperty('--p',(n/24*100)+'%');
+    o.slider.setAttribute('aria-label','ساعات '+cat.name);
+    o.slider.setAttribute('aria-valuetext',hrs(n));
+  });
+  $('freeNote').textContent=c['']===0
+    ?'اليوم ممتلئ — 24 من 24 ساعة. قلّل قسمًا لتفتح ساعات جديدة.'
+    :'المتاح للإضافة: '+hrs(c[''])+' فاضية (الحد الأقصى لليوم 24 ساعة).';
+}
+
+/* ======================= الأسبوع ======================= */
+var donutEls=[],colRefs=[];
+function buildDonut(){
+  var h='';for(var i=0;i<5;i++)h+='<circle class="dseg" cx="21" cy="21" r="15.9155" transform="rotate(-90 21 21)"/>';
+  $('donutSvg').innerHTML=h;
+  donutEls=Array.prototype.slice.call($('donutSvg').querySelectorAll('circle'));
+}
+function buildCols(){
+  for(var d=0;d<7;d++){
+    (function(d){
+      var col=document.createElement('button');col.type='button';col.className='col';
+      col.innerHTML='<span class="tot"></span><span class="bar"></span><span class="nm"></span>';
+      col.querySelector('.nm').textContent=DAYS_SHORT[d];
+      var bar=col.querySelector('.bar'),segs=state.cats.map(function(){var s=document.createElement('i');s.className='s';bar.appendChild(s);return s;});
+      col.addEventListener('click',function(){
+        var narrow=!(window.matchMedia&&matchMedia('(min-width:1020px)').matches);
+        selectDay(d,narrow);
+      });
+      $('cols').appendChild(col);colRefs.push({col:col,tot:col.querySelector('.tot'),segs:segs});
+    })(d);
+  }
+}
+function renderWeek(){
+  var t=weekCounts(),busy=168-t[''],L=leaders(t),html='';
+
+  /* بطاقات الملخص */
+  state.cats.forEach(function(c){
+    var n=t[c.id];
+    html+='<div class="sc" style="--c:'+c.color+'"><div class="sl"><span>'+esc(c.emoji)+'</span>'+esc(c.name)+'</div>'+
+      '<div class="sv">'+n+'<small>ساعة</small></div><div class="ss">متوسط '+avg(n)+' ساعة يوميًا · '+pct(n,168)+'%</div></div>';
+  });
+  if(L.max){
+    var names=L.list.map(function(x){return (x.emoji?x.emoji+' ':'')+x.name;}).join(' و ');
+    html+='<div class="sc leader" style="--c:'+L.list[0].color+'"><div class="sl"><span>🏆</span>القسم المتفوق'+(L.list.length>1?' (تعادل)':'')+'</div>'+
+      '<div class="sv txt">'+esc(names)+'</div><div class="ss">'+hrs(L.max)+' · '+pct(L.max,168)+'% من الأسبوع</div></div>';
+  }else{
+    html+='<div class="sc leader"><div class="sl"><span>🏆</span>القسم المتفوق</div><div class="sv txt">—</div><div class="ss">ابدأ بتوزيع ساعاتك</div></div>';
+  }
+  html+='<div class="sc" style="--c:var(--empty-text)"><div class="sl"><span>⏳</span>الساعات الفاضية</div>'+
+    '<div class="sv">'+t['']+'<small>ساعة</small></div><div class="ss">'+pct(t[''],168)+'% من 168 — متاحة لك</div></div>';
+  $('cards').innerHTML=html;
+
+  /* الدونات */
+  var ids=allIds(),cum=0,multi=ids.filter(function(id){return t[id]>0;}).length>1;
+  ids.forEach(function(id,k){
+    var n=t[id],len=n/168*100,gap=(multi&&len>1)?0.7:0,dash=Math.max(len-gap,0),cat=catById(id),el=donutEls[k];
+    el.style.stroke=cat?cat.color:'var(--empty)';
+    el.style.strokeDasharray=dash+' '+(100-dash);
+    el.style.strokeDashoffset=String(-(cum+gap/2));
+    cum+=len;
+  });
+  $('donutBusy').innerHTML='<b>'+busy+'</b><span>ساعة مشغولة من 168</span>';
+  var lg='';
+  ids.forEach(function(id){
+    var cat=catById(id),n=t[id];
+    lg+='<div class="lrow" style="--c:'+(cat?cat.color:'var(--empty)')+'"><i class="ld"></i><span class="ln">'+
+      (cat?esc((cat.emoji?cat.emoji+' ':'')+cat.name):'فاضي')+'</span><span class="lv">'+n+' س</span><span class="lp">'+pct(n,168)+'%</span></div>';
+  });
+  $('donutLegend').innerHTML=lg;
+
+  /* أعمدة الأيام */
+  var tdy=todayIdx();
+  colRefs.forEach(function(r,d){
+    var c=counts(d),acc=0,parts=[];
+    r.segs.forEach(function(s,i){
+      var cat=state.cats[i],n=c[cat.id];
+      s.style.background=cat.color;
+      s.style.bottom=(acc/24*100)+'%';
+      s.style.height=(n/24*100)+'%';
+      s.classList.toggle('z',n===0);
+      acc+=n;
+      if(n)parts.push(cat.name+' '+n);
+    });
+    r.tot.textContent=24-c[''];
+    r.col.setAttribute('aria-current',String(d===sel));
+    r.col.classList.toggle('today',d===tdy);
+    var label=DAYS[d]+': مشغول '+(24-c[''])+' / فاضي '+c[''];
+    r.col.setAttribute('aria-label',label);
+    r.col.title=label+(parts.length?' ('+parts.join('، ')+')':'');
+  });
+  $('colsLegend').innerHTML=state.cats.map(function(c){return '<span style="--c:'+c.color+'"><i></i>'+esc((c.emoji?c.emoji+' ':'')+c.name)+'</span>';}).join('')+'<span style="--c:var(--empty)"><i></i>فاضي</span>';
+}
+
+/* ======================= الأدوات ======================= */
+function openCopy(){
+  $('copyTitle').textContent='نسخ '+DAYS[sel]+' إلى...';
+  var box=$('copyDays');box.innerHTML='';
+  DAYS.forEach(function(n,d){
+    if(d===sel)return;
+    var lb=document.createElement('label');lb.className='chk';
+    lb.innerHTML='<input type="checkbox"><span></span>';
+    lb.querySelector('input').value=String(d);
+    lb.querySelector('span').textContent=n;
+    box.appendChild(lb);
+  });
+  openOv($('copyOv'),'input');
+}
+$('btnCopy').addEventListener('click',openCopy);
+$('copyAll').addEventListener('click',function(){
+  var ins=Array.prototype.slice.call($('copyDays').querySelectorAll('input'));
+  var all=ins.every(function(i){return i.checked;});
+  ins.forEach(function(i){i.checked=!all;});
+});
+$('copyGo').addEventListener('click',function(){
+  var targets=Array.prototype.slice.call($('copyDays').querySelectorAll('input:checked')).map(function(i){return parseInt(i.value,10);});
+  if(!targets.length){toast('اختر يومًا واحدًا على الأقل');return;}
+  closeOv($('copyOv'));
+  var from=sel;
+  withUndo('تم نسخ '+DAYS[from]+' إلى '+(targets.length===1?DAYS[targets[0]]:targets.length+' أيام'),function(){
+    targets.forEach(function(d){state.days[d]=state.days[from].slice();});
+  });
+});
+$('btnClear').addEventListener('click',function(){
+  if(counts(sel)['']===24){toast('هذا اليوم فارغ بالفعل');return;}
+  var d=sel;
+  ask('تفريغ '+DAYS[d],'ستتحول كل ساعات هذا اليوم إلى فاضية.','تفريغ اليوم',function(){
+    withUndo('تم تفريغ '+DAYS[d],function(){state.days[d]=new Array(24).fill('');});
+  });
+});
+$('btnReset').addEventListener('click',function(){
+  ask('إعادة ضبط الكل','سيتم مسح جداول الأيام السبعة بالكامل. أسماء الأقسام وألوانها لن تتغيّر.','مسح كل شيء',function(){
+    withUndo('تمت إعادة ضبط الأسبوع',function(){state.days=freshDays();});
+  });
+});
+
+/* ======================= الإعدادات والمظهر ======================= */
+var mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
+function resolvedTheme(){return state.theme==='auto'?((mq&&mq.matches)?'dark':'light'):state.theme;}
+function applyTheme(){
+  var t=resolvedTheme();
+  document.documentElement.dataset.theme=t;
+  $('metaTheme').setAttribute('content',t==='dark'?'#0d0f1e':'#f3f4fa');
+  $('themeBtn').textContent=t==='dark'?'☀️':'🌙';
+  Array.prototype.forEach.call($('setTheme').querySelectorAll('button'),function(b){
+    b.setAttribute('aria-pressed',String(b.dataset.t===state.theme));
+  });
+}
+if(mq){var onMq=function(){if(state.theme==='auto')applyTheme();};if(mq.addEventListener)mq.addEventListener('change',onMq);else if(mq.addListener)mq.addListener(onMq);}
+$('themeBtn').addEventListener('click',function(){state.theme=resolvedTheme()==='dark'?'light':'dark';save();applyTheme();});
+Array.prototype.forEach.call($('setTheme').querySelectorAll('button'),function(b){
+  b.addEventListener('click',function(){state.theme=b.dataset.t;save();applyTheme();});
+});
+
+function buildSettings(){
+  var box=$('setCats');box.innerHTML='';
+  state.cats.forEach(function(cat,i){
+    var row=document.createElement('div');row.className='setrow';
+    row.innerHTML='<input class="in emo" type="text" maxlength="4" aria-label="رمز القسم"><input class="in nam" type="text" maxlength="14" aria-label="اسم القسم"><input class="in col" type="color" aria-label="لون القسم">';
+    var emo=row.querySelector('.emo'),nam=row.querySelector('.nam'),col=row.querySelector('.col');
+    emo.value=cat.emoji;nam.value=cat.name;col.value=cat.color;
+    emo.addEventListener('input',function(){cat.emoji=emo.value.trim();save();renderAll();});
+    nam.addEventListener('input',function(){cat.name=nam.value.trim()||DEFAULT_CATS[i].name;save();renderAll();});
+    nam.addEventListener('blur',function(){nam.value=cat.name;});
+    col.addEventListener('input',function(){cat.color=col.value;save();renderAll();});
+    box.appendChild(row);
+  });
+}
+$('settingsBtn').addEventListener('click',function(){buildSettings();applyTheme();openOv($('setOv'),'.nam');});
+$('setRestore').addEventListener('click',function(){
+  DEFAULT_CATS.forEach(function(d,i){Object.assign(state.cats[i],d);});
+  save();buildSettings();renderAll();toast('تمت استعادة الأسماء والألوان الافتراضية');
+});
+
+/* ======================= الطباعة / PDF ======================= */
+function renderPrint(){
+  var dt='';
+  try{dt=new Date().toLocaleDateString('ar-u-nu-latn',{year:'numeric',month:'long',day:'numeric'});}catch(e){dt=new Date().toLocaleDateString();}
+  var h='<h2 class="ph">كل ساعة تهمّ — جدولي الأسبوعي</h2><p class="pd">'+esc(dt)+'</p>';
+  h+='<div class="pleg">'+state.cats.map(function(c){return '<span><i style="background:'+c.color+'"></i>'+esc((c.emoji?c.emoji+' ':'')+c.name)+'</span>';}).join('')+'<span><i style="background:#e3e5ee"></i>فاضي</span></div>';
+  h+='<table class="pt"><thead><tr><th>اليوم</th>';
+  for(var i=0;i<24;i++)h+='<th>'+pad(i)+'</th>';
+  h+='<th>مشغول</th><th>فاضي</th></tr></thead><tbody>';
+  DAYS.forEach(function(n,d){
+    var c=counts(d);h+='<tr><th>'+n+'</th>';
+    state.days[d].forEach(function(id){var cat=catById(id);h+='<td style="background:'+(cat?cat.color:'#eceef4')+'"></td>';});
+    h+='<td>'+(24-c[''])+'</td><td>'+c['']+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  $('printArea').innerHTML=h;
+}
+window.addEventListener('beforeprint',renderPrint);
+$('printBtn').addEventListener('click',function(){
+  renderPrint();
+  try{window.print();}catch(e){toast('تعذّرت الطباعة من هذا المتصفح');}
+});
+
+/* ======================= العرض ======================= */
+$('viewDay').addEventListener('click',function(){setView('day');});
+$('viewWeek').addEventListener('click',function(){setView('week');});
+
+function renderAll(){
+  renderTabs();renderDayHead();renderGrid();renderEditors();renderWeek();
+}
+
+/* ======================= التشغيل ======================= */
+applyTheme();
+buildTabs();buildDayHead();buildGrid();buildEditors();buildDonut();buildCols();
+renderAll();
+if(tabEls[sel].scrollIntoView){try{tabEls[sel].scrollIntoView({inline:'center',block:'nearest'});}catch(e){}}
+setInterval(function(){renderTabs();renderGrid();},60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){renderTabs();renderGrid();}});
+
+})();
+</script>
+</body>
+</html>
